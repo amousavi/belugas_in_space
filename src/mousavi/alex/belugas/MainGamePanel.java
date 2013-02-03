@@ -1,9 +1,9 @@
 package mousavi.alex.belugas;
 
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.*;
 
 import mousavi.alex.belugas.components.Speed;
+import mousavi.alex.belugas.enemy.*;
 import mousavi.alex.belugas.sprites.BelugaSequence;
 import mousavi.alex.belugas.sprites.Laser;
 import android.app.Activity;
@@ -25,10 +25,14 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 	
 	private BelugaSequence beluga;
 	
-	Laser laserQue;
-	ArrayList<Laser> lasers;
+	private Laser laserQue;
+	private ArrayList<Laser> lasers;
 	boolean queAdded = false;
 	
+	private int maxEnemies;
+	private int enemiesAlive;
+	private ArrayList<Enemy> aliveEnemyList;
+	private Deque<Enemy> deadEnemyList;
 	
 	public MainGamePanel(Context context) {
 		super(context);
@@ -43,8 +47,8 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 				, 5, 6);	// FPS and number of frames in the animation
 		
 		lasers = new ArrayList<Laser>();
-		
-		
+		Log.d("Panel", "Start");
+		initEnemies(20);
 		
 		// create the game loop thread
 		initThread();
@@ -121,98 +125,121 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 	    final int action = ev.getAction();
 	    //Log.v("touch",""+ev.getPointerCount());
 	    switch (action & MotionEvent.ACTION_MASK) {
-	    case MotionEvent.ACTION_DOWN: {
-	        final float x = ev.getX();
-	        final float y = ev.getY();
-	        
-	        mLastTouchX = x;
-	        mLastTouchY = y;
-
-	        // Save the ID of this pointer
-	        mActivePointerId = ev.getPointerId(0);
-	        //Log.v("touch","pointer id: "+ev.getPointerId(0));
-	        if(x < getWidth()/2){
-				belugaTouch = mActivePointerId;
-	        	beluga.setHeld(true);
-				beluga.handleTouch((int)x, (int)y);
+			case MotionEvent.ACTION_DOWN: {
+				final float x = ev.getX();
+				final float y = ev.getY();
 				
-			} else {
+				mLastTouchX = x;
+				mLastTouchY = y;
+	
+				// Save the ID of this pointer
+				mActivePointerId = ev.getPointerId(0);
+				//Log.v("touch","pointer id: "+ev.getPointerId(0));
+				if(x < getWidth()/2){
+					belugaTouch = mActivePointerId;
+					beluga.setHeld(true);
+					beluga.handleTouch((int)x, (int)y);
+					
+				} else {
+					newLaser(new Laser(BitmapFactory.decodeResource(getResources(), R.drawable.laser),
+							beluga.getX() + beluga.getSpriteWidth(),beluga.getY()));
+	
+				}
+				break;
+			}
+			
+			case MotionEvent.ACTION_POINTER_DOWN:{
 				newLaser(new Laser(BitmapFactory.decodeResource(getResources(), R.drawable.laser),
 						beluga.getX() + beluga.getSpriteWidth(),beluga.getY()));
-
+	
 			}
-	        break;
-	    }
-	    
-	    case MotionEvent.ACTION_POINTER_DOWN:{
-	    	newLaser(new Laser(BitmapFactory.decodeResource(getResources(), R.drawable.laser),
-					beluga.getX() + beluga.getSpriteWidth(),beluga.getY()));
-
-	    }
-	        
-	    case MotionEvent.ACTION_MOVE: {
-	        // Find the index of the active pointer and fetch its position
-	        final int pointerIndex = ev.findPointerIndex(mActivePointerId);
-	        final float x = ev.getX(pointerIndex);
-	        final float y = ev.getY(pointerIndex);
-	        
-	        //final float dx = x - mLastTouchX;
-	        //final float dy = y - mLastTouchY;
-	        
-	        //mPosX += dx;
-	        //mPosY += dy;
-	        
-	        mLastTouchX = x;
-	        mLastTouchY = y;
-	        
-	        if(mActivePointerId == belugaTouch)
-	        	beluga.handleTouch((int)x, (int)y);
-	        	
-	        //if(x < getWidth()/2){
-			//	beluga.handleTouch((int)x, (int)y);
-			//}
-	        
-	        invalidate();
-	        break;
-	    }
-	        
-	    case MotionEvent.ACTION_UP: {
-	    	final int pointerIndex = ev.findPointerIndex(mActivePointerId);
-	    	//if((int)ev.getX(pointerIndex) < getWidth()/2)
-	    	if(mActivePointerId == belugaTouch)
-	    		beluga.setHeld(false);
-	    	mActivePointerId = INVALID_POINTER_ID;
-	        
-	        break;
-	    }
-	        
-	    case MotionEvent.ACTION_CANCEL: {
-	        mActivePointerId = INVALID_POINTER_ID;
-	        //beluga.setHeld(false);
-	        break;
-	    }
-	    
-	    case MotionEvent.ACTION_POINTER_UP: {
-	        // Extract the index of the pointer that left the touch sensor
-	        final int pointerIndex = (action & MotionEvent.ACTION_POINTER_INDEX_MASK) 
-	                >> MotionEvent.ACTION_POINTER_INDEX_SHIFT;
-	        final int pointerId = ev.getPointerId(pointerIndex);
-	        if (pointerId == mActivePointerId) {
-	            // This was our active pointer going up. Choose a new
-	            // active pointer and adjust accordingly.
-	            final int newPointerIndex = pointerIndex == 0 ? 1 : 0;
-	            mLastTouchX = ev.getX(newPointerIndex);
-	            mLastTouchY = ev.getY(newPointerIndex);
-	            mActivePointerId = ev.getPointerId(newPointerIndex);
-	        }
-	        break;
-	    }
+				
+			case MotionEvent.ACTION_MOVE: {
+				// Find the index of the active pointer and fetch its position
+				final int pointerIndex = ev.findPointerIndex(mActivePointerId);
+				final float x = ev.getX(pointerIndex);
+				final float y = ev.getY(pointerIndex);
+				
+				//final float dx = x - mLastTouchX;
+				//final float dy = y - mLastTouchY;
+				
+				//mPosX += dx;
+				//mPosY += dy;
+				
+				mLastTouchX = x;
+				mLastTouchY = y;
+				
+				if(mActivePointerId == belugaTouch)
+					beluga.handleTouch((int)x, (int)y);
+					
+				//if(x < getWidth()/2){
+				//	beluga.handleTouch((int)x, (int)y);
+				//}
+				
+				invalidate();
+				break;
+			}
+				
+			case MotionEvent.ACTION_UP: {
+				final int pointerIndex = ev.findPointerIndex(mActivePointerId);
+				//if((int)ev.getX(pointerIndex) < getWidth()/2)
+				if(mActivePointerId == belugaTouch)
+					beluga.setHeld(false);
+				mActivePointerId = INVALID_POINTER_ID;
+				
+				break;
+			}
+				
+			case MotionEvent.ACTION_CANCEL: {
+				mActivePointerId = INVALID_POINTER_ID;
+				//beluga.setHeld(false);
+				break;
+			}
+			
+			case MotionEvent.ACTION_POINTER_UP: {
+				// Extract the index of the pointer that left the touch sensor
+				final int pointerIndex = (action & MotionEvent.ACTION_POINTER_INDEX_MASK) 
+						>> MotionEvent.ACTION_POINTER_INDEX_SHIFT;
+				final int pointerId = ev.getPointerId(pointerIndex);
+				if (pointerId == mActivePointerId) {
+					// This was our active pointer going up. Choose a new
+					// active pointer and adjust accordingly.
+					final int newPointerIndex = pointerIndex == 0 ? 1 : 0;
+					mLastTouchX = ev.getX(newPointerIndex);
+					mLastTouchY = ev.getY(newPointerIndex);
+					mActivePointerId = ev.getPointerId(newPointerIndex);
+				}
+				break;
+			}
 	    }
 	    
 	    return true;
 	}
 	
-
+	public void initEnemies(int enemynum)
+	{
+		maxEnemies = enemynum;
+		aliveEnemyList = new ArrayList<Enemy>();
+		deadEnemyList = new ArrayDeque<Enemy>(enemynum);
+		enemiesAlive = 0;
+		for (int i = 0; i < enemynum; i++)
+		{
+			deadEnemyList.add(new Enemy(i));
+		}
+	}
+	
+	public Enemy spawnEnemy(int sx, int sy)
+	{
+		if (enemiesAlive == maxEnemies)
+		{
+			return null;
+		}
+		Enemy oo = deadEnemyList.removeLast();
+		oo.spawn(sx, sy);
+		aliveEnemyList.add(oo);
+		enemiesAlive++;
+		return oo;
+	}
 	
 	public void render(Canvas canvas) {
 		
@@ -223,11 +250,14 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 		while(itr.hasNext()){
 			itr.next().draw(canvas);
 		}
+		Iterator<Enemy> ee = aliveEnemyList.iterator();
+		while (ee.hasNext())
+		{
+			ee.next().draw(canvas);
+		}
 		
 		
 	}
-	
-	
 	
 
 	/**
@@ -248,6 +278,22 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 			
 				itr.next().update(time);
 			
+		}
+		for (int i = 0; i < enemiesAlive; i++)
+		{
+			Enemy oo = aliveEnemyList.get(i);
+			if (oo.update())
+			{
+				oo.die();
+				aliveEnemyList.remove(i);
+				i--;
+				enemiesAlive--;
+				deadEnemyList.add(oo);
+			}
+		}
+		if (Math.random() < .1)
+		{
+			spawnEnemy(1200, (int)(Math.random() * 600));
 		}
 		/*
 		for(int i=0; i<lasers.size();i++){

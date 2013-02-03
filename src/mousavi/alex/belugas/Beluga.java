@@ -12,6 +12,9 @@ public class Beluga {
 	private boolean touched;
 	private Speed speed;
 	
+	private int shootTimer;
+	private int maxShootTimer;
+	
 	public Beluga(Bitmap bitmap, int x, int y) {
 		this.bitmap = bitmap;
 		this.x = x;
