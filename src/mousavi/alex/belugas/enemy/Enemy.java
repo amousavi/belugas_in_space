@@ -1,6 +1,7 @@
 package mousavi.alex.belugas.enemy;
 
 import android.graphics.*;
+import mousavi.alex.belugas.sprites.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -20,7 +21,9 @@ public class Enemy
 	private double moveYSpeed;
 	private boolean alive;
 	
-	private Bitmap sprite;
+	private int type;
+	
+	private SpriteAnimation sprite;
 	
 	public Enemy(int id)
 	{
@@ -33,6 +36,7 @@ public class Enemy
 		//placeholder move faggot shit
 		x += moveXSpeed;
 		y += moveYSpeed;
+		sprite.update();
 		if (x < 0)
 		{
 			return true;
@@ -40,14 +44,17 @@ public class Enemy
 		return false;
 	}
 	
-	public void spawn(int sx, int sy)
+	public void spawn(int tt, int sx, int sy)
 	{
 		//sprite = new 
+		type = tt;
 		x = sx;
 		y = sy;
 		moveXSpeed = -7;
 		moveYSpeed = 0;
+		
 		alive = true;
+		sprite = new SpriteAnimation(EnemyStats.ENEMY_SPRITES[EnemyStats.SNOWBALL], 64, 64, 7);
 	}
 	
 	public void die()
@@ -60,7 +67,7 @@ public class Enemy
 		//canvas.drawBitmap(sprite, (int)x, (int)y, null);
 		Paint pp = new Paint();
 		pp.setColor(Color.BLUE);
-		canvas.drawRect((int)x - 10, (int)y - 5, (int)x + 10, (int)y + 5, pp);
+		sprite.draw(canvas,(int)x, (int)y, pp);
 	}
 	
 }

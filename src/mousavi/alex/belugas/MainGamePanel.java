@@ -218,6 +218,7 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 	
 	public void initEnemies(int enemynum)
 	{
+		new EnemyStats(this.getContext());
 		maxEnemies = enemynum;
 		aliveEnemyList = new ArrayList<Enemy>();
 		deadEnemyList = new ArrayDeque<Enemy>(enemynum);
@@ -235,7 +236,7 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 			return null;
 		}
 		Enemy oo = deadEnemyList.removeLast();
-		oo.spawn(sx, sy);
+		oo.spawn(EnemyStats.SNOWBALL, sx, sy);
 		aliveEnemyList.add(oo);
 		enemiesAlive++;
 		return oo;
