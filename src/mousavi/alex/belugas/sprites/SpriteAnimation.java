@@ -22,12 +22,12 @@ public class SpriteAnimation
 	private int animationSpeed;
 	private Rect sourceRect;
 
-	public SpriteAnimation(Bitmap spriteSheet, int cellWidth, int cellHeight, int animationSpeed)
+	public SpriteAnimation(Bitmap spriteSheet, int maxIndex, int animationSpeed)
 	{
 		this.spriteSheet = spriteSheet;
-		this.cellWidth = cellWidth;
-		this.cellHeight = cellHeight;
-		maxIndex = spriteSheet.getWidth() / cellWidth - 1;
+		this.maxIndex = maxIndex;
+		cellWidth = spriteSheet.getWidth() / (maxIndex + 1);
+		cellHeight = spriteSheet.getHeight();
 		curIndex = 0;
 		this.animationSpeed = animationSpeed;
 		indexDelta = animationSpeed;
@@ -51,7 +51,7 @@ public class SpriteAnimation
 				//sourceRect.top = 0;
 				sourceRect.right = cellWidth;
 				curIndex = 0;
-				Log.d("SpriteAnimate" , "" + spriteSheet.getHeight());
+				
 			}
 			else 
 			{

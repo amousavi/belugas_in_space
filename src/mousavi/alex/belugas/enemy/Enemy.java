@@ -54,7 +54,7 @@ public class Enemy
 		moveYSpeed = 0;
 		
 		alive = true;
-		sprite = new SpriteAnimation(EnemyStats.ENEMY_SPRITES[EnemyStats.SNOWBALL], 64, 64, 7);
+		sprite = new SpriteAnimation(EnemyStats.ENEMY_SPRITES[EnemyStats.SNOWBALL], 2, 7);
 	}
 	
 	public void die()

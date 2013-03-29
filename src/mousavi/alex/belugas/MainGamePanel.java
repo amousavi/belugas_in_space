@@ -2,6 +2,7 @@ package mousavi.alex.belugas;
 
 import java.util.*;
 
+import mousavi.alex.belugas.boss.*;
 import mousavi.alex.belugas.components.Speed;
 import mousavi.alex.belugas.enemy.*;
 import mousavi.alex.belugas.sprites.BelugaSequence;
@@ -34,6 +35,9 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 	private ArrayList<Enemy> aliveEnemyList;
 	private Deque<Enemy> deadEnemyList;
 	
+	private Boss boss;
+	private int bossTimer;
+	
 	public MainGamePanel(Context context) {
 		super(context);
 		// adding the callback (this) to the surface holder to intercept events
@@ -49,6 +53,9 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 		lasers = new ArrayList<Laser>();
 		Log.d("Panel", "Start");
 		initEnemies(20);
+		
+		boss = new Boss(BitmapFactory.decodeResource(getResources(), R.drawable.polarbear));
+		bossTimer = 120;
 		
 		// create the game loop thread
 		initThread();
@@ -247,6 +254,9 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 		canvas.drawColor(Color.BLACK);
 		
 		beluga.draw(canvas);
+		
+		boss.draw(canvas);
+		
 		Iterator<Laser> itr = lasers.iterator();
 		while(itr.hasNext()){
 			itr.next().draw(canvas);
@@ -260,15 +270,10 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 		
 	}
 	
-
-	/**
-	 * This is the game update method. It iterates through all the objects
-	 * and calls their update method if they have one or calls specific
-	 * engine's update method.
-	 */
-	public void update() {
-		long time = System.currentTimeMillis();
-		beluga.update(time);
+	
+	public void gameTick(long delta)
+	{
+		beluga.update(delta);
 		removeExtraLasers();
 		if(queAdded){
 			lasers.add(laserQue);
@@ -276,9 +281,9 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 		}
 		Iterator<Laser> itr = lasers.iterator();
 		while(itr.hasNext()){
-			
-				itr.next().update(time);
-			
+
+			itr.next().update(delta);
+
 		}
 		for (int i = 0; i < enemiesAlive; i++)
 		{
@@ -292,6 +297,27 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 				deadEnemyList.add(oo);
 			}
 		}
+		boss.update();
+		if (bossTimer > 0 && bossTimer != -1)
+		{
+			bossTimer--;
+		}
+		else 
+		{
+			boss.enterScreen();
+			bossTimer = -1;
+		}
+	}
+
+	/**
+	 * This is the game update method. It iterates through all the objects
+	 * and calls their update method if they have one or calls specific
+	 * engine's update method.
+	 */
+	public void update() {
+		long time = System.currentTimeMillis();
+		
+		gameTick(time);
 		if (Math.random() < .1)
 		{
 			spawnEnemy(1200, (int)(Math.random() * 600));
