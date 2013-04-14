@@ -3,10 +3,7 @@
  */
 package mousavi.alex.belugas.sprites;
 
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.Rect;
+import android.graphics.*;
 import android.util.Log;
 
 /**
@@ -29,8 +26,12 @@ public class BelugaSequence {
 	
 	private int x;				// the X coordinate of the object (top left of the image)
 	private int y;				// the Y coordinate of the object (top left of the image)
+	private int prevY;
+	
+	private int rotation;
 	
 	private boolean screenHeld;
+	
 	
 	int screenHeight;
 	int screenWidth;
@@ -48,6 +49,8 @@ public class BelugaSequence {
 		frameTicker = 0l;
 		screenHeight = height;
 		screenWidth = width;
+		
+		rotation = 0;
 	}
 	
 	
@@ -114,6 +117,12 @@ public class BelugaSequence {
 		if(!bool){vert=0;horiz=0;}
 		screenHeld = bool;
 	}
+	
+	public void shootBullet()
+	{
+		
+	}
+	
 	int vert = 0;
 	int horiz = 0;
 	private int tx;
@@ -122,10 +131,15 @@ public class BelugaSequence {
 		if(Math.abs(touchY-(y+spriteHeight/2)) < 40){
 			vert = 0;
 		}else if(touchY > y + spriteHeight/2){
+			if (rotation < 15)
+				rotation ++;
 			vert = 1;
 		} else if(touchY < y + spriteHeight/2){
+			if (rotation > -15)
+				rotation--;
 			vert = -1;
-		} else vert = 0;
+		} else 
+			vert = 0;
 		
 		if(touchX > x + spriteWidth/2){
 			horiz = 1;
@@ -162,7 +176,19 @@ public class BelugaSequence {
 			}
 		}
 		
-		
+		if (y == prevY)
+		{
+			if (rotation > 0)
+			{
+				rotation -= 1;
+			}
+			else if (rotation < 0)
+			{
+				rotation += 1;
+			}
+		}
+		prevY = y;
+
 		
 	}
 	
@@ -195,9 +221,11 @@ public class BelugaSequence {
 	// the draw method which draws the corresponding frame
 	public void draw(Canvas canvas) {
 		// where to draw the sprite
+		
+		canvas.rotate(rotation, x + (spriteWidth / 2), y + spriteHeight / 2);
 		Rect destRect = new Rect(getX(), getY(), getX() + spriteWidth, getY() + spriteHeight);
 		canvas.drawBitmap(bitmap, sourceRect, destRect, null);
-		
+		canvas.restore();
 		
 	}
 

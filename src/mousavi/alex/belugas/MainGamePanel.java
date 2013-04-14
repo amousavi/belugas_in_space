@@ -3,6 +3,7 @@ package mousavi.alex.belugas;
 import java.util.*;
 
 import mousavi.alex.belugas.boss.*;
+import mousavi.alex.belugas.bullet.*;
 import mousavi.alex.belugas.components.Speed;
 import mousavi.alex.belugas.enemy.*;
 import mousavi.alex.belugas.sprites.BelugaSequence;
@@ -24,16 +25,22 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 	private MainThread thread;
 	private static final String TAG = MainGamePanel.class.getSimpleName();
 	
+	public static int GAME_WIDTH = 600;
+	public static int GAME_HEIGHT = 400;
+	
 	private BelugaSequence beluga;
 	
-	private Laser laserQue;
-	private ArrayList<Laser> lasers;
-	boolean queAdded = false;
 	
 	private int maxEnemies;
 	private int enemiesAlive;
 	private ArrayList<Enemy> aliveEnemyList;
 	private Deque<Enemy> deadEnemyList;
+	
+	private int maxBullets;
+	private int bulletsAlive;
+	private ArrayList<Bullet> aliveBulletList;
+	private Deque<Bullet> deadBulletList;
+	
 	
 	private Boss boss;
 	private int bossTimer;
@@ -50,9 +57,9 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 				, getWidth(), getHeight()	// width and height of the screen
 				, 5, 6);	// FPS and number of frames in the animation
 		
-		lasers = new ArrayList<Laser>();
 		Log.d("Panel", "Start");
-		initEnemies(20);
+		initEnemies(30);
+		initBullet(50);
 		
 		boss = new Boss(BitmapFactory.decodeResource(getResources(), R.drawable.polarbear));
 		bossTimer = 120;
@@ -148,17 +155,14 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 					beluga.handleTouch((int)x, (int)y);
 					
 				} else {
-					newLaser(new Laser(BitmapFactory.decodeResource(getResources(), R.drawable.laser),
-							beluga.getX() + beluga.getSpriteWidth(),beluga.getY()));
+					//make laser code here
 	
 				}
 				break;
 			}
 			
 			case MotionEvent.ACTION_POINTER_DOWN:{
-				newLaser(new Laser(BitmapFactory.decodeResource(getResources(), R.drawable.laser),
-						beluga.getX() + beluga.getSpriteWidth(),beluga.getY()));
-	
+				// make laser here
 			}
 				
 			case MotionEvent.ACTION_MOVE: {
@@ -227,13 +231,27 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 	{
 		new EnemyStats(this.getContext());
 		maxEnemies = enemynum;
-		aliveEnemyList = new ArrayList<Enemy>();
+		aliveEnemyList = new ArrayList<Enemy>(enemynum);
 		deadEnemyList = new ArrayDeque<Enemy>(enemynum);
 		enemiesAlive = 0;
 		for (int i = 0; i < enemynum; i++)
 		{
 			deadEnemyList.add(new Enemy(i));
 		}
+	}
+	
+	public void initBullet(int bulletnum)
+	{
+		new BulletStats(this.getContext());
+		maxBullets = bulletnum;
+		aliveBulletList = new ArrayList<Bullet>(bulletnum);
+		deadBulletList = new ArrayDeque<Bullet>(bulletnum);
+		bulletsAlive = 0;
+		for (int i = 0; i < bulletnum; i++)
+		{
+			deadBulletList.add(new Bullet(i));
+		}
+		
 	}
 	
 	public Enemy spawnEnemy(int sx, int sy)
@@ -256,10 +274,10 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 		beluga.draw(canvas);
 		
 		boss.draw(canvas);
-		
-		Iterator<Laser> itr = lasers.iterator();
-		while(itr.hasNext()){
-			itr.next().draw(canvas);
+
+		for (Bullet bullet : aliveBulletList)
+		{
+			
 		}
 		Iterator<Enemy> ee = aliveEnemyList.iterator();
 		while (ee.hasNext())
@@ -274,16 +292,9 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 	public void gameTick(long delta)
 	{
 		beluga.update(delta);
-		removeExtraLasers();
-		if(queAdded){
-			lasers.add(laserQue);
-			queAdded = false;
-		}
-		Iterator<Laser> itr = lasers.iterator();
-		while(itr.hasNext()){
-
-			itr.next().update(delta);
-
+		for (Bullet bullet : aliveBulletList)
+		{
+			bullet.update();
 		}
 		for (int i = 0; i < enemiesAlive; i++)
 		{
@@ -334,23 +345,17 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 		beluga.update(System.currentTimeMillis(),x,y);
 	}
 
-	public void newLaser(Laser l){
-		laserQue = l;
-		queAdded = true;
-	}
-
-	public void removeExtraLasers() {
-		if(lasers!=null){
-			int size=lasers.size();
-			
-			if(size>30){
-				lasers.remove(0);
-			}
-		}
-		
-
-	}
 	
+	public Bullet createBullet(int type, int sx, int sy, int team)
+	{
+		if (bulletsAlive >= maxBullets)
+			return null;
+		Bullet oo = deadBulletList.removeFirst();
+		aliveBulletList.add(oo);
+		bulletsAlive++;
+		return oo;
+	}
+
 	
 }
 
