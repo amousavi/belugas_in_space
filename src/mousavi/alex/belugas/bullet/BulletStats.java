@@ -17,7 +17,8 @@ public class BulletStats
 	
 	public static final int LASER = 0;
 
-	public static final Bitmap[] LASER_SPRITES = new Bitmap[5];
+	public static final Bitmap[] BULLET_SPRITES = new Bitmap[5];
+	public static final int[] BULLET_SPEED = new int[5];
 
 
 	public BulletStats(Context context)
@@ -28,7 +29,7 @@ public class BulletStats
 
 	private void insertBullet(int type, int drawIndex)
 	{
-		LASER_SPRITES[type] = BitmapFactory.decodeResource(context.getResources(), drawIndex);
+		BULLET_SPRITES[type] = BitmapFactory.decodeResource(context.getResources(), drawIndex);
 	}
 	
 }

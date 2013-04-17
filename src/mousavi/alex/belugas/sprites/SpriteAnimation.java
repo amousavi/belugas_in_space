@@ -67,4 +67,14 @@ public class SpriteAnimation
 	{
 		canvas.drawBitmap(spriteSheet, sourceRect, new Rect(xx, yy, xx + cellWidth , yy + cellHeight ), pp);
 	}
+
+	public int getCellHeight()
+	{
+		return cellHeight;
+	}
+
+	public int getCellWidth()
+	{
+		return cellWidth;
+	}
 }

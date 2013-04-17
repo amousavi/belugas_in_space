@@ -1,6 +1,7 @@
 package mousavi.alex.belugas.enemy;
 
 import android.graphics.*;
+import mousavi.alex.belugas.*;
 import mousavi.alex.belugas.sprites.*;
 
 /**
@@ -50,11 +51,11 @@ public class Enemy
 		type = tt;
 		x = sx;
 		y = sy;
-		moveXSpeed = -7;
+		moveXSpeed = -5;
 		moveYSpeed = 0;
 		
 		alive = true;
-		sprite = new SpriteAnimation(EnemyStats.ENEMY_SPRITES[EnemyStats.SNOWBALL], 2, 7);
+		sprite = new SpriteAnimation(EnemyStats.ENEMY_SPRITES[type], EnemyStats.ENEMY_SPRITEFRAMES[type], 7);
 	}
 	
 	public void die()
@@ -67,7 +68,7 @@ public class Enemy
 		//canvas.drawBitmap(sprite, (int)x, (int)y, null);
 		Paint pp = new Paint();
 		pp.setColor(Color.BLUE);
-		sprite.draw(canvas,(int)x, (int)y, pp);
+		sprite.draw(canvas,(int)(x * MainGamePanel.DRAW_WIDTH_RATIO), (int)(y * MainGamePanel.DRAW_HEIGHT_RATIO), pp);
 	}
 	
 }

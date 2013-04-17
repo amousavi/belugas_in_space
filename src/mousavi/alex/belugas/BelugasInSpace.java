@@ -2,17 +2,19 @@ package mousavi.alex.belugas;
 
 import android.app.Activity;
 import android.content.pm.ActivityInfo;
+import android.graphics.*;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.SurfaceView;
-import android.view.Window;
-import android.view.WindowManager;
+import android.view.*;
 
 public class BelugasInSpace extends Activity {
    
 	private static final String TAG = BelugasInSpace.class.getSimpleName();
 
 	SurfaceView gamePanel;
+	
+	public static int SCREEN_WIDTH;
+	public static int SCREEN_HEIGHT;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -23,6 +25,22 @@ public class BelugasInSpace extends Activity {
         // making it full screen
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         // set our MainGamePanel as the View
+
+		final int version = android.os.Build.VERSION.SDK_INT;
+		if (version >= 13)
+		{
+			Display display = getWindowManager().getDefaultDisplay();
+			Point size = new Point();
+			display.getSize(size);
+			SCREEN_WIDTH = size.x;
+			SCREEN_HEIGHT = size.y;
+		}
+		else
+		{
+			Display display = getWindowManager().getDefaultDisplay();
+			SCREEN_WIDTH = display.getWidth();
+			SCREEN_HEIGHT = display.getHeight();
+		}
         gamePanel = new MainGamePanel(this);
         setContentView(gamePanel);
         Log.d(TAG, "View added");

@@ -2,34 +2,32 @@ package mousavi.alex.belugas;
 
 import java.util.*;
 
+import android.view.*;
 import mousavi.alex.belugas.boss.*;
 import mousavi.alex.belugas.bullet.*;
-import mousavi.alex.belugas.components.Speed;
 import mousavi.alex.belugas.enemy.*;
-import mousavi.alex.belugas.sprites.BelugaSequence;
-import mousavi.alex.belugas.sprites.Laser;
-import android.app.Activity;
+import mousavi.alex.belugas.sprites.*;
 import android.content.Context;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.util.Log;
-import android.view.MotionEvent;
-import android.view.ScaleGestureDetector;
-import android.view.SurfaceHolder;
-import android.view.SurfaceHolder.Callback;
-import android.view.SurfaceView;
 
 public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback {
 
 	private MainThread thread;
 	private static final String TAG = MainGamePanel.class.getSimpleName();
 	
-	public static int GAME_WIDTH = 600;
-	public static int GAME_HEIGHT = 400;
+	public static int GAME_WIDTH = 1280;
+	public static int GAME_HEIGHT = 720;
 	
-	private BelugaSequence beluga;
+	public static double DRAW_WIDTH_RATIO;
+	public static double DRAW_HEIGHT_RATIO;
 	
+	private Beluga beluga;
+	
+	
+	private ArrayList<QueueBullet> shootQueue;
 	
 	private int maxEnemies;
 	private int enemiesAlive;
@@ -50,12 +48,15 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 		// adding the callback (this) to the surface holder to intercept events
 		getHolder().addCallback(this);
 		
+		
+		DRAW_WIDTH_RATIO = ((double)BelugasInSpace.SCREEN_WIDTH / (double)GAME_WIDTH);
+		DRAW_HEIGHT_RATIO = ((double)BelugasInSpace.SCREEN_HEIGHT / (double)GAME_HEIGHT);
+		
+		Log.d(TAG, "dw:" + DRAW_WIDTH_RATIO + "," + DRAW_HEIGHT_RATIO + "," + getWidth() + "," + GAME_WIDTH);
+		
 		// create Beluga and load bitmap
-		beluga = new BelugaSequence(
-				BitmapFactory.decodeResource(getResources(), R.drawable.belugasequence) 
-				, 100, 100	// initial position
-				, getWidth(), getHeight()	// width and height of the screen
-				, 5, 6);	// FPS and number of frames in the animation
+		beluga = new Beluga( this ,
+				BitmapFactory.decodeResource(getResources(), R.drawable.belugasequence), 120, 100,  getWidth(), getHeight());	// FPS and number of frames in the animation
 		
 		Log.d("Panel", "Start");
 		initEnemies(30);
@@ -155,14 +156,13 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 					beluga.handleTouch((int)x, (int)y);
 					
 				} else {
-					//make laser code here
-	
+					beluga.shootBullet();
 				}
 				break;
 			}
 			
 			case MotionEvent.ACTION_POINTER_DOWN:{
-				// make laser here
+				beluga.shootBullet();
 			}
 				
 			case MotionEvent.ACTION_MOVE: {
@@ -243,25 +243,27 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 	public void initBullet(int bulletnum)
 	{
 		new BulletStats(this.getContext());
+		shootQueue = new ArrayList<QueueBullet>();
 		maxBullets = bulletnum;
 		aliveBulletList = new ArrayList<Bullet>(bulletnum);
 		deadBulletList = new ArrayDeque<Bullet>(bulletnum);
 		bulletsAlive = 0;
 		for (int i = 0; i < bulletnum; i++)
 		{
-			deadBulletList.add(new Bullet(i));
+			deadBulletList.add(new Bullet(this, i));
 		}
 		
 	}
 	
-	public Enemy spawnEnemy(int sx, int sy)
+	public Enemy spawnEnemy(int type, int sx, int sy)
 	{
 		if (enemiesAlive == maxEnemies)
 		{
 			return null;
 		}
 		Enemy oo = deadEnemyList.removeLast();
-		oo.spawn(EnemyStats.SNOWBALL, sx, sy);
+		int nn = (int)(Math.random() * 2);
+		oo.spawn(1, sx, sy);
 		aliveEnemyList.add(oo);
 		enemiesAlive++;
 		return oo;
@@ -275,9 +277,11 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 		
 		boss.draw(canvas);
 
-		for (Bullet bullet : aliveBulletList)
+		Iterator<Bullet> iter = aliveBulletList.iterator();
+		while (iter.hasNext())
 		{
-			
+			Bullet bullet = iter.next();
+			bullet.draw(canvas);
 		}
 		Iterator<Enemy> ee = aliveEnemyList.iterator();
 		while (ee.hasNext())
@@ -291,10 +295,42 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 	
 	public void gameTick(long delta)
 	{
-		beluga.update(delta);
-		for (Bullet bullet : aliveBulletList)
+
+		if (Math.random() < .04)
 		{
-			bullet.update();
+			spawnEnemy(1, 1200, (int)(Math.random() * GAME_HEIGHT));
+		}
+		
+		beluga.update(delta);
+		ArrayDeque<Bullet> dieList = new ArrayDeque<Bullet>();
+		Iterator<Bullet> iter = aliveBulletList.iterator();
+		/*while (iter.hasNext())
+		{
+			Bullet bb = iter.next();
+			if (!bb.isAlive())
+			{
+				dieList.add(bb);
+			}
+		}*/
+		
+		while (!shootQueue.isEmpty())
+		{
+			QueueBullet bb = shootQueue.remove(0);
+			createBullet(bb.getType(),bb.getSpawnX(),bb.getSpawnY(),bb.getTeam());
+		}
+		iter = aliveBulletList.iterator();
+		while (iter.hasNext())
+		{
+			Bullet bb =  iter.next();
+			bb.update();
+			if (!bb.isAlive())
+			{
+				dieList.add(bb);
+			}
+		}
+		while (!dieList.isEmpty())
+		{
+			removeBullet(dieList.removeFirst());
 		}
 		for (int i = 0; i < enemiesAlive; i++)
 		{
@@ -318,6 +354,8 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 			boss.enterScreen();
 			bossTimer = -1;
 		}
+
+		
 	}
 
 	/**
@@ -329,10 +367,7 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 		long time = System.currentTimeMillis();
 		
 		gameTick(time);
-		if (Math.random() < .1)
-		{
-			spawnEnemy(1200, (int)(Math.random() * 600));
-		}
+		
 		/*
 		for(int i=0; i<lasers.size();i++){
 			if(lasers.get(i).getX() > getWidth()+10){
@@ -344,16 +379,29 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 	public void update(int x,int y) {
 		beluga.update(System.currentTimeMillis(),x,y);
 	}
-
+	
+	public void shootBullet(int type, int sx, int sy, int team)
+	{
+		shootQueue.add(new QueueBullet(type, sx, sy, team));
+	}
 	
 	public Bullet createBullet(int type, int sx, int sy, int team)
 	{
 		if (bulletsAlive >= maxBullets)
 			return null;
 		Bullet oo = deadBulletList.removeFirst();
+		oo.spawn(type, sx, sy, team);
 		aliveBulletList.add(oo);
 		bulletsAlive++;
+		Log.d("Beluga", "bullets:" + bulletsAlive);
 		return oo;
+	}
+	
+	public void removeBullet(Bullet oo)
+	{
+		deadBulletList.add(oo);
+		aliveBulletList.remove(oo);
+		bulletsAlive--;
 	}
 
 	
